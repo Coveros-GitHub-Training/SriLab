@@ -3,6 +3,7 @@ package com.coveros.training.flavorhub.controller;
 import com.coveros.training.flavorhub.model.Recipe;
 import com.coveros.training.flavorhub.service.RecipeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/recipes")
 @RequiredArgsConstructor
+@Slf4j
 public class RecipeController {
     
     private final RecipeService recipeService;
@@ -39,6 +41,27 @@ public class RecipeController {
     @GetMapping("/search")
     public ResponseEntity<List<Recipe>> searchRecipes(@RequestParam String query) {
         return ResponseEntity.ok(recipeService.searchRecipes(query));
+    }
+    
+    /**
+     * Get the recipe of the day.
+     * Returns a deterministic recipe based on the current date.
+     * The same recipe is returned throughout the entire day.
+     * 
+     * @return ResponseEntity containing the daily recipe, or 404 if no recipes exist
+     */
+    @GetMapping("/daily")
+    public ResponseEntity<Recipe> getDailyRecipe() {
+        log.info("Request received for daily recipe");
+        return recipeService.getDailyRecipe()
+                .map(recipe -> {
+                    log.info("Returning daily recipe: {}", recipe.getName());
+                    return ResponseEntity.ok(recipe);
+                })
+                .orElseGet(() -> {
+                    log.error("No recipes available for daily recipe");
+                    return ResponseEntity.notFound().build();
+                });
     }
     
     /**
